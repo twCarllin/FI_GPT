@@ -23,11 +23,15 @@ def read_pdf(path):
 def cut_into_sentences(text):
     return nltk.sent_tokenize(text)
 
+
 # combine the sentences into a paragraph chunk less than 1000 words and return it in list form
 def combine_sentences(sentences):
     chunk = []
     chunk_size = 0
     for sentence in sentences:
+        # trim all the dot from the sentence
+        sentence = sentence.replace('.', '')
+
         if chunk_size + len(sentence) < 1000:
             chunk.append(sentence)
             chunk_size += len(sentence)
@@ -36,6 +40,7 @@ def combine_sentences(sentences):
             chunk = [sentence]
             chunk_size = len(sentence)
     yield chunk
+
 
 # send the chunk to the chatgpt via openai api package
 def send_to_chatgpt(chunk):
@@ -65,6 +70,9 @@ def main():
 
     # combine the sentences into chunks
     chunks = combine_sentences(sentences)
+
+    # trim dot from the chunks
+    chunks = [trim_dot(chunk) for chunk in chunks]
 
     # send the chunks to chatgpt
     for chunk in chunks:
