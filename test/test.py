@@ -5,7 +5,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # import function from main.py
-from main import read_pdf, cut_into_sentences, combine_sentences, send_to_chatgpt
+from main import read_pdf, cut_into_sentences, combine_sentences, send_to_chatgpt, add_prompt_before_chunks, add_prompt_after_chunks
 
 # test read_pdf
 text = read_pdf('./files/jpm-4q22-earnings-call-final-transcript.pdf')
@@ -18,5 +18,12 @@ print(sentences[1])
 chunks = combine_sentences(sentences)
 
 # iterate through the generator chunks
-for chunk in chunks:
-    print(chunk)
+# for chunk in chunks:
+#     print(chunk)
+
+chunk_list = [x for x in chunks]
+chunk_list = add_prompt_before_chunks(chunk_list)
+chunk_list = add_prompt_after_chunks(chunk_list)
+
+
+print(len(chunk_list))
