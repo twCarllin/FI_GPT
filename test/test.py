@@ -22,8 +22,11 @@ chunks = combine_sentences(sentences)
 #     print(chunk)
 
 chunk_list = [x for x in chunks]
+
 chunk_list = add_prompt_before_chunks(chunk_list)
 chunk_list = add_prompt_after_chunks(chunk_list)
 
 
 print(len(chunk_list))
+for chunk in chunk_list:
+    print(chunk)

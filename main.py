@@ -35,8 +35,9 @@ def combine_sentences(sentences):
     for sentence in sentences:
         # trim all the dot from the sentence
         sentence = sentence.replace(".", "")
+        sentence = sentence.replace("\n", "")
 
-        if chunk_size + len(sentence) < 1000:
+        if chunk_size + len(sentence) < 3000:
             chunk.append(sentence)
             chunk_size += len(sentence)
         else:
@@ -46,21 +47,34 @@ def combine_sentences(sentences):
     yield chunk
 
 
+def reformat_messages(original_list, role="user"):
+    messages = {"role": role, "content": original_list}
+    return messages
+
+def reformat_messages(original_list, role="user"):
+    messages = []
+
+    for text in original_list:
+        messages.append({"role": role, "content": text})
+    return messages
+
+
 # send the chunk to the chatgpt via openai api package
-def send_to_chatgpt(chunk):
+def send_to_chatgpt(messages):
     # get the api key from the environment variable
     openai.api_key = os.environ.get("GPT_KEY")
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "assistant", "content": chunk}],
+        messages=messages,
         temperature=0.9,
         max_tokens=150,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0.6,
     )
-    return response
+
+    return response['choices'][0]['message']
 
 
 def generate_response(prompt):
@@ -91,15 +105,19 @@ def generate_response(prompt):
 
 # insert prompt before real content
 def add_prompt_before_chunks(chunks):
-    prompt = 'before I send "end reading", continue read text and only reply "noted"'
-    chunks.insert(0, prompt)
+    prompt = ['You are a helpful assistant to help answer questions. Read content first, before I send "end reading", continue read text and only reply "noted"']
+    messages = reformat_messages(prompt, role="system")
+
+    chunks.insert(0, messages)
     return chunks
 
 
 # insert prompt after real content
 def add_prompt_after_chunks(chunks):
-    prompt = "end reading"
-    chunks.append(prompt)
+    prompt = ["end reading"]
+    messages = reformat_messages(prompt)
+
+    chunks.append(messages)
     return chunks
 
 
@@ -116,20 +134,20 @@ def main():
     chunks = combine_sentences(sentences)
 
     chunk_list = [x for x in chunks]
-
+    chunk_list = [reformat_messages(x) for x in chunk_list]
     chunk_list = chunk_list[:6]
-
     chunk_list = add_prompt_before_chunks(chunk_list)
     chunk_list = add_prompt_after_chunks(chunk_list)
-    print(chunk_list[0])
 
     # send the chunks to chatgpt
-    for chunk in chunk_list:
-        # response = generate_response(chunk)
+    for i, chunk in enumerate(chunk_list):
         response = send_to_chatgpt(chunk)
+
+        print(i)
         print(response)
-        # print(response["choices"][0]["text"])
-        time.sleep(1)
+
+        if i%3 == 0:
+            time.sleep(60)
 
 
 if __name__ == "__main__":
